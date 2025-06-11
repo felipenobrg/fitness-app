@@ -23,9 +23,6 @@ public class UserRequest {
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    @NotBlank(message = "Role is required")
-    private String role;
-
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

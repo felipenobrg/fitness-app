@@ -1,6 +1,7 @@
 package com.fitness.userservice.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,6 +17,7 @@ public class User {
     private String id;
 
     @Column( nullable = false)
+    @Email(message = "Invalid email format")
     private String email;
 
     @Column(nullable = false)

@@ -28,7 +28,7 @@ public class ActivityController {
     }
 
     @PostMapping("/getActivityById")
-    public ResponseEntity<ActivityResponse> getActivityById(@RequestBody String activityId) {
-        return ResponseEntity.ok(activityService.getActivityById(activityId));
+    public ResponseEntity<ActivityResponse> getActivityByUserId(@RequestBody String userId) {
+        return ResponseEntity.ok(activityService.getActivityByUserId(userId));
     }
 }

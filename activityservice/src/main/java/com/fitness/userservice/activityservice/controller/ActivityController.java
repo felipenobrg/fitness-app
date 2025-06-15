@@ -9,10 +9,9 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/activities")
@@ -27,8 +26,8 @@ public class ActivityController {
 
     }
 
-    @PostMapping("/getActivityById")
-    public ResponseEntity<ActivityResponse> getActivityByUserId(@RequestBody String userId) {
+    @GetMapping("/getActivityById")
+    public ResponseEntity<List<ActivityResponse>> getActivityByUserId(@RequestHeader String userId) {
         return ResponseEntity.ok(activityService.getActivityByUserId(userId));
     }
 }

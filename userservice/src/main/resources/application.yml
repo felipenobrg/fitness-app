@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: userservice  # Nome do serviço no Eureka
+    name: userservice
   cloud:
     compatibility-verifier:
       enabled: false

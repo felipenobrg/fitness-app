@@ -8,6 +8,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="aiservice" />
+        <module name="server" />
       </profile>
       <profile name="Annotation profile for activityservice" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -29,9 +30,6 @@
         <module name="userservice" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="server" target="24" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">

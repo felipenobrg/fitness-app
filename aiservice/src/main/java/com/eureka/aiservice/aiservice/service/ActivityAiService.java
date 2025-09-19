@@ -7,13 +7,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -21,12 +24,39 @@ import java.util.List;
 public class ActivityAiService {
     private final GeminiService geminiService;
     private final RecommendationRepository recommendationRepository;
+    private final RedisTemplate<String, Recommendation> redisTemplate;
 
     public Recommendation generateRecommendation(Activity activity) {
-        String prompt = createPromptForActivity(activity);
-        String aiResponse = geminiService.getAnswer(prompt);
-        log.info("RESPONSE FROM AI: {} ", aiResponse);
-        return processAiResponse(activity, aiResponse);
+        String cacheKey = String.format("recommendation:%s:%s:%d:%d:%s",
+                activity.getUserId(),
+                activity.getActivityType(),
+                activity.getDuration(),
+                activity.getCaloriesBurned(),
+                Objects.hashCode(activity.getAdditionalMetrics()));
+
+        try {
+            Recommendation cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null) {
+                log.info("Returning cached recommendation for activity: {}", activity.getId());
+                return cached;
+            }
+
+            String prompt = createPromptForActivity(activity);
+            String aiResponse = geminiService.getAnswer(prompt);
+            log.info("RESPONSE FROM AI: {}", aiResponse);
+            Recommendation recommendation = processAiResponse(activity, aiResponse);
+
+            // Cache with TTL
+            redisTemplate.opsForValue().set("recommendation:" + recommendation.getId(), recommendation);
+            log.info("Cached recommendation for key: {}", cacheKey);
+
+            return recommendation;
+        } catch (Exception e) {
+            log.error("Error accessing Redis for key {}: {}", cacheKey, e.getMessage());
+            String prompt = createPromptForActivity(activity);
+            String aiResponse = geminiService.getAnswer(prompt);
+            return processAiResponse(activity, aiResponse);
+        }
     }
 
     private Recommendation processAiResponse(Activity activity, String aiResponse) {
@@ -46,7 +76,7 @@ public class ActivityAiService {
                     .replaceAll("\\n```", "")
                     .trim();
 
-         log.info("PARSED RESPONSE FROM AI: {} ", jsonContent);
+            log.info("PARSED RESPONSE FROM AI: {} ", jsonContent);
 
             JsonNode analysisJson = mapper.readTree(jsonContent);
             JsonNode analysisNode = analysisJson.path("analysis");
@@ -65,7 +95,7 @@ public class ActivityAiService {
                 Recommendation recommendation = Recommendation.builder()
                         .activityId(activity.getId())
                         .userId(activity.getUserId())
-                        .activityType(activity.getType())
+                        .activityType(activity.getActivityType())
                         .recommendation(fullAnalysis.toString().trim())
                         .improvements(improvements)
                         .suggestions(suggestions)
@@ -86,7 +116,7 @@ public class ActivityAiService {
             return Recommendation.builder()
                     .activityId(activity.getId())
                     .userId(activity.getUserId())
-                    .activityType(activity.getType())
+                    .activityType(activity.getActivityType())
                     .recommendation(fullAnalysis.toString().trim())
                     .improvements(improvements)
                     .suggestions(suggestions)
@@ -104,7 +134,7 @@ public class ActivityAiService {
         return Recommendation.builder()
                 .activityId(activity.getId())
                 .userId(activity.getUserId())
-                .activityType(activity.getType())
+                .activityType(activity.getActivityType())
                 .recommendation("Unable to generate detailed analysis")
                 .improvements(Collections.singletonList("Continue with your current routine"))
                 .suggestions(Collections.singletonList("Consider consulting a fitness professional"))

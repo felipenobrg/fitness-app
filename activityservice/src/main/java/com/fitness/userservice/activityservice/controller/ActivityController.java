@@ -31,4 +31,9 @@ public class ActivityController {
         return ResponseEntity.ok(activityService.getActivityByUserId(userId));
     }
 
+    @GetMapping("/test")
+    public String test() {
+        return "Activity Service is up and running!";
+    }
+
 }
